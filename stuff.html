@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SecuRVault — File Encryption Tool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="stuff.css" />
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="logo-row">
+      <div class="logo-icon">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="18" width="28" height="20" rx="4" fill="none" stroke="#00ff88" stroke-width="2"/>
+          <path d="M15 18V13a7 7 0 0 1 14 0v5" stroke="#00c9ff" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="22" cy="27" r="3" fill="#00ff88"/>
+          <line x1="22" y1="30" x2="22" y2="34" stroke="#00ff88" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1>SecuRVault</h1>
+    </div>
+    <p class="tagline">AES-256-GCM · Client-Side · Zero Server Contact</p>
+    <div class="security-badge">All encryption locally on your browser</div>
+  </header>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" id="tab-enc" onclick="switchTab('encrypt')">🔐 Encrypt File</button>
+      <button class="tab" id="tab-dec" onclick="switchTab('decrypt')">🔓 Decrypt File</button>
+    </div>
+
+    <div class="panel" id="panel-encrypt">
+      <div class="dropzone" id="dropzone-enc"
+           ondragover="handleDragOver(event,'enc')"
+           ondragleave="handleDragLeave('enc')"
+           ondrop="handleDrop(event,'enc')">
+        <input type="file" id="file-enc" onchange="handleFileSelect('enc')"/>
+        <div class="drop-icon">📄</div>
+        <div class="drop-title">Drop any file here</div>
+        <div class="drop-sub">or click to browse — any format supported</div>
+      </div>
+      <div class="file-preview" id="preview-enc">
+        <div class="file-icon" id="preview-enc-icon">📄</div>
+        <div class="file-info">
+          <div class="file-name" id="preview-enc-name"></div>
+          <div class="file-meta" id="preview-enc-meta"></div>
+        </div>
+        <button class="file-remove" onclick="removeFile('enc')" title="Remove file">✕</button>
+      </div>
+
+      <div class="field">
+        <label>Encryption Password</label>
+        <div class="input-wrap">
+          <input type="password" id="pw-enc" placeholder="Enter a strong passphrase…"
+                 oninput="updateStrength(this.value)" autocomplete="new-password"/>
+          <button class="toggle-pw" onclick="togglePw('pw-enc',this)" title="Show/hide password">👁</button>
+        </div>
+        <div class="strength-wrap">
+          <div class="strength-bars">
+            <div class="strength-bar" id="sb1"></div>
+            <div class="strength-bar" id="sb2"></div>
+            <div class="strength-bar" id="sb3"></div>
+            <div class="strength-bar" id="sb4"></div>
+          </div>
+          <div class="strength-label" id="strength-label">—</div>
+        </div>
+      </div>
+
+      <button class="btn btn-encrypt" id="btn-enc" onclick="encryptFile()" disabled>
+        <div class="btn-inner"><span>🔐</span><span>Encrypt &amp; Download</span></div>
+      </button>
+
+      <div class="progress-wrap" id="prog-enc">
+        <div class="progress-label"><span id="prog-enc-label">Encrypting…</span><span id="prog-enc-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-enc-fill"></div></div>
+      </div>
+
+      <div class="alert" id="alert-enc"></div>
+    </div>
+
+    <div class="panel" id="panel-decrypt" style="display:none;">
+      <div class="dropzone" id="dropzone-dec"
+           ondragover="handleDragOver(event,'dec')"
+           ondragleave="handleDragLeave('dec')"
+           ondrop="handleDrop(event,'dec')">
+        <input type="file" id="file-dec" accept=".enc" onchange="handleFileSelect('dec')"/>
+        <div class="drop-icon">🔒</div>
+        <div class="drop-title">Drop your <code style="color:var(--accent)">.enc</code> file here</div>
+        <div class="drop-sub">or click to browse — select an encrypted SecureVault file</div>
+      </div>
+      <div class="file-preview" id="preview-dec">
+        <div class="file-icon">🔒</div>
+        <div class="file-info">
+          <div class="file-name" id="preview-dec-name"></div>
+          <div class="file-meta" id="preview-dec-meta"></div>
+        </div>
+        <button class="file-remove" onclick="removeFile('dec')" title="Remove file">✕</button>
+      </div>
+
+      <div class="field">
+        <label>Decryption Password</label>
+        <div class="input-wrap">
+          <input type="password" id="pw-dec" placeholder="Enter the passphrase used during encryption…" autocomplete="current-password"/>
+          <button class="toggle-pw" onclick="togglePw('pw-dec',this)" title="Show/hide password">👁</button>
+        </div>
+      </div>
+
+      <button class="btn btn-decrypt" id="btn-dec" onclick="decryptFile()" disabled>
+        <div class="btn-inner"><span>🔓</span><span>Decrypt &amp; Download</span></div>
+      </button>
+
+      <div class="progress-wrap" id="prog-dec">
+        <div class="progress-label"><span id="prog-dec-label">Decrypting…</span><span id="prog-dec-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-dec-fill"></div></div>
+      </div>
+
+      <div class="alert" id="alert-dec"></div>
+    </div>
+  </div>
+
+  <div class="algo-section info-section">
+    <div class="algo-title">⚙ Encryption Algorithm Flow</div>
+    <div class="algo-flow">
+      <div class="algo-step" style="font-size: 15px;">📄 Input File</div>
+      <div class="algo-arrow" style="font-size: 15px;">→</div>
+      <div class="algo-step" style="font-size: 15px;">FileReader API</div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step highlight" style="font-size: 15px;">PBKDF2<br/>100k iterations</div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step highlight" style="font-size: 13px;">AES-256-GCM<br/>Encrypt</div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step" style="font-size: 15px;">Salt+IV+Cipher</div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step" style="font-size: 15px;">📥 .enc Download</div>
+    </div>
+  </div>
+
+  <div class="info-section" style="margin-top:12px;">
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-card-icon">🔑</div>
+        <div class="info-card-title">AES-256-GCM</div>
+        <div class="info-card-desc">Military-grade symmetric encryption with built-in authentication tag to detect tampering.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon">🧂</div>
+        <div class="info-card-title">PBKDF2 + Salt</div>
+        <div class="info-card-desc">Your password is hardened through 100,000 iterations. Random salt prevents rainbow-table attacks.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon">🎲</div>
+        <div class="info-card-title">Random IV</div>
+        <div class="info-card-desc">A fresh 12-byte Initialization Vector is generated per encryption — identical files produce different ciphertexts.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon">🖥️</div>
+        <div class="info-card-title">100% Client-Side</div>
+        <div class="info-card-desc">No uploads. No servers. Your file and password never leave your device — ever.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    SecuRVault &nbsp;·&nbsp; Powered by <span>Web Crypto API</span> &nbsp;·&nbsp; AES-256-GCM encryption &nbsp;·&nbsp; No data transmitted
+  </footer>
+</div>
+
+<script src="stuff.js"></script>
+</body>
+</html>
