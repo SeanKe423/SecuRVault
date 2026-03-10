@@ -138,7 +138,10 @@ async function encryptFile() {
   hideAlert('enc');
   const file = state.enc.file;
   const password = document.getElementById('pw-enc').value;
-  if (!file || !password) return;
+  if (!file || !password) {
+    showAlert('enc', 'error', 'Please select a file and enter a password before encrypting.');
+    return;
+  }
 
   const btn = document.getElementById('btn-enc');
   btn.disabled = true;
@@ -187,7 +190,10 @@ async function decryptFile() {
   hideAlert('dec');
   const file = state.dec.file;
   const password = document.getElementById('pw-dec').value;
-  if (!file || !password) return;
+  if (!file || !password) {
+    showAlert('dec', 'error', 'Please select a .enc file and enter a password before decrypting.');
+    return;
+  }
 
   const btn = document.getElementById('btn-dec');
   btn.disabled = true;
